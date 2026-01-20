@@ -1,0 +1,2 @@
+source /home/bren/arduino/09_lvgl_demo_v8/build/bootloader/gdbinit/symbols
+source /home/bren/arduino/09_lvgl_demo_v8/build/bootloader/gdbinit/connect
