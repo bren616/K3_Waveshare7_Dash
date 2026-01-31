@@ -863,13 +863,6 @@
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/lvgl__lvgl/CMakeFiles/install.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/lvgl__lvgl/CMakeFiles/install/local.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/lvgl__lvgl/CMakeFiles/install/strip.dir
-/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/__idf_can_manager.dir
-/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/edit_cache.dir
-/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/rebuild_cache.dir
-/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/list_install_components.dir
-/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/install.dir
-/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/install/local.dir
-/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/install/strip.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/espressif__esp_codec_dev/CMakeFiles/__idf_espressif__esp_codec_dev.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/espressif__esp_codec_dev/CMakeFiles/edit_cache.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/espressif__esp_codec_dev/CMakeFiles/rebuild_cache.dir
@@ -918,6 +911,13 @@
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/waveshare__esp32_p4_wifi6_touch_lcd_7b/CMakeFiles/install.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/waveshare__esp32_p4_wifi6_touch_lcd_7b/CMakeFiles/install/local.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/waveshare__esp32_p4_wifi6_touch_lcd_7b/CMakeFiles/install/strip.dir
+/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/__idf_can_manager.dir
+/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/edit_cache.dir
+/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/rebuild_cache.dir
+/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/list_install_components.dir
+/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/install.dir
+/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/install/local.dir
+/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/CMakeFiles/install/strip.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/chmorgan__esp-libhelix-mp3/CMakeFiles/__idf_chmorgan__esp-libhelix-mp3.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/chmorgan__esp-libhelix-mp3/CMakeFiles/edit_cache.dir
 /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/chmorgan__esp-libhelix-mp3/CMakeFiles/rebuild_cache.dir

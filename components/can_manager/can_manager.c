@@ -1,4 +1,5 @@
 #include "can_manager.h"
+#include "bsp/esp-bsp.h"
 #include "driver/twai.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -35,34 +36,6 @@ static void update_lv_label(DashVariable *var, int32_t value) {
   }
 }
 
-static void mock_data_task(void *arg) {
-  while (1) {
-    if (g_dash_vars) {
-      for (size_t i = 0; i < g_dash_var_count; i++) {
-        DashVariable *var = &g_dash_vars[i];
-
-        if (var->increasing) {
-          var->current_val += var->step_val;
-          if (var->current_val >= var->max_val) {
-            var->current_val = var->max_val;
-            var->increasing = false;
-          }
-        } else {
-          var->current_val -= var->step_val;
-          if (var->current_val <= var->min_val) {
-            var->current_val = var->min_val;
-            var->increasing = true;
-          }
-        }
-
-        // Update UI
-        update_lv_label(var, var->current_val);
-      }
-    }
-    vTaskDelay(pdMS_TO_TICKS(100)); // Update every 100ms
-  }
-}
-
 static void can_rx_task(void *arg) {
   twai_message_t message;
   while (1) {
@@ -88,7 +61,9 @@ static void can_rx_task(void *arg) {
 
             var->current_val =
                 raw_val; // Direct mapping for now, no scaling applied yet
+            bsp_display_lock(0);
             update_lv_label(var, var->current_val);
+            bsp_display_unlock();
           }
         }
       }
@@ -120,8 +95,7 @@ void init_can_manager(void) {
   }
 
   // Create tasks
-  // For now, enable Mock Data by default as requested
-  xTaskCreate(mock_data_task, "mock_data", 4096, NULL, 5, NULL);
+  // Mock data task removed for real data usage
 
   // Also create RX task (it won't receive anything if not connected, but good
   // to have ready)

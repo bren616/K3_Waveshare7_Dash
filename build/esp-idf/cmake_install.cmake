@@ -559,11 +559,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/cmake_install.cmake")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for the subdirectory.
   include("/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/espressif__esp_codec_dev/cmake_install.cmake")
 endif()
 
@@ -595,6 +590,11 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
   include("/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/waveshare__esp32_p4_wifi6_touch_lcd_7b/cmake_install.cmake")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for the subdirectory.
+  include("/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/can_manager/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
