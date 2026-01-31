@@ -1,2 +1,2 @@
-source /home/bren/arduino/09_lvgl_demo_v8/build/gdbinit/symbols
-source /home/bren/arduino/09_lvgl_demo_v8/build/gdbinit/connect
+source /home/bren/arduino/K3_Waveshare7_Dash/build/gdbinit/symbols
+source /home/bren/arduino/K3_Waveshare7_Dash/build/gdbinit/connect

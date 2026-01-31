@@ -1,4 +1,4 @@
-# Install script for directory: /home/bren/arduino/09_lvgl_demo_v8/managed_components/chmorgan__esp-libhelix-mp3
+# Install script for directory: /home/bren/arduino/K3_Waveshare7_Dash/managed_components/chmorgan__esp-libhelix-mp3
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -17,4 +17,4 @@ set confirm off
 set confirm on
 
 # Load application symbols
-file /home/bren/arduino/09_lvgl_demo_v8/build/bootloader/bootloader.elf
+file /home/bren/arduino/K3_Waveshare7_Dash/build/bootloader/bootloader.elf

@@ -1,4 +1,4 @@
-# Install script for directory: /home/bren/arduino/09_lvgl_demo_v8/components/bsp_extra
+# Install script for directory: /home/bren/arduino/K3_Waveshare7_Dash/components/bsp_extra
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/bren/arduino/09_lvgl_demo_v8/build/esp-idf/mbedtls/mbedtls/cmake_install.cmake")
+  include("/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/mbedtls/mbedtls/cmake_install.cmake")
 endif()
 

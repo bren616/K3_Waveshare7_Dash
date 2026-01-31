@@ -10,18 +10,18 @@ if(NOT EXISTS "/home/bren/esp/v5.5.2/esp-idf/components/bootloader/subproject")
   file(MAKE_DIRECTORY "/home/bren/esp/v5.5.2/esp-idf/components/bootloader/subproject")
 endif()
 file(MAKE_DIRECTORY
-  "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader"
-  "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader-prefix"
-  "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader-prefix/tmp"
-  "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader-prefix/src/bootloader-stamp"
-  "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader-prefix/src"
-  "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader-prefix/src/bootloader-stamp"
+  "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader"
+  "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader-prefix"
+  "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader-prefix/tmp"
+  "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader-prefix/src/bootloader-stamp"
+  "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader-prefix/src"
+  "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader-prefix/src/bootloader-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
+    file(MAKE_DIRECTORY "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "/home/bren/arduino/09_lvgl_demo_v8/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
 endif()
