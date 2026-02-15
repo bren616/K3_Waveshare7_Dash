@@ -1,3 +1,4 @@
+#include "ble_manager.h"
 #include "bsp/display.h"
 #include "bsp/esp-bsp.h"
 #include "bsp_board_extra.h"
@@ -13,6 +14,77 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "ui.h"
+
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+static const char *TAG = "MAIN";
+
+/**
+ * Periodic task to read BLE data and update lap time / delta UI labels.
+ * Runs at 10 Hz in its own FreeRTOS task.
+ */
+static void ble_ui_update_task(void *arg) {
+  char buf[32];
+
+  while (1) {
+    int32_t lap_time_ms, delta_ms;
+    bool lap_valid, delta_valid;
+
+    ble_manager_get_lap_time(&lap_time_ms, &lap_valid);
+    ble_manager_get_delta(&delta_ms, &delta_valid);
+
+    bsp_display_lock(0);
+
+    /* Update lap time label */
+    if (lap_valid && ble_manager_is_connected()) {
+      int32_t abs_ms = lap_time_ms < 0 ? -lap_time_ms : lap_time_ms;
+      int32_t total_secs = abs_ms / 1000;
+      int32_t frac = abs_ms % 1000;
+      int32_t mins = total_secs / 60;
+      int32_t secs = total_secs % 60;
+
+      if (mins > 0) {
+        snprintf(buf, sizeof(buf), "%" PRId32 ":%02" PRId32 ".%02" PRId32, mins,
+                 secs, frac / 10);
+      } else {
+        snprintf(buf, sizeof(buf), "%" PRId32 ".%02" PRId32, secs, frac / 10);
+      }
+      lv_label_set_text(ui_LapTimeLabel, buf);
+    } else {
+      lv_label_set_text(ui_LapTimeLabel, "--");
+    }
+
+    /* Update delta label */
+    if (delta_valid && ble_manager_is_connected()) {
+      int32_t abs_ms = delta_ms < 0 ? -delta_ms : delta_ms;
+      int32_t secs = abs_ms / 1000;
+      int32_t frac = abs_ms % 1000;
+      const char *sign = (delta_ms >= 0) ? "+" : "-";
+
+      snprintf(buf, sizeof(buf), "%s%" PRId32 ".%03" PRId32, sign, secs, frac);
+      lv_label_set_text(ui_DeltaLabel, buf);
+
+      /* Color: green if faster (negative), red if slower (positive) */
+      if (delta_ms < 0) {
+        lv_obj_set_style_text_color(ui_DeltaLabel, lv_color_hex(0x15EB28),
+                                    LV_PART_MAIN | LV_STATE_DEFAULT);
+      } else {
+        lv_obj_set_style_text_color(ui_DeltaLabel, lv_color_hex(0xFF0000),
+                                    LV_PART_MAIN | LV_STATE_DEFAULT);
+      }
+    } else {
+      lv_label_set_text(ui_DeltaLabel, "--");
+      lv_obj_set_style_text_color(ui_DeltaLabel, lv_color_hex(0xFFFFFF),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
+    bsp_display_unlock();
+
+    vTaskDelay(pdMS_TO_TICKS(100)); /* 10 Hz */
+  }
+}
 
 void app_main(void) {
   bsp_display_cfg_t cfg = {.lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
@@ -55,4 +127,14 @@ void app_main(void) {
   set_dash_variables(dash_vars, sizeof(dash_vars) / sizeof(dash_vars[0]));
 
   bsp_display_unlock();
+
+  /* Initialize BLE manager (runs in background) */
+  esp_err_t ble_ret = ble_manager_init();
+  if (ble_ret != ESP_OK) {
+    ESP_LOGE(TAG, "BLE manager init failed: %s", esp_err_to_name(ble_ret));
+  } else {
+    /* Create UI update task for BLE data */
+    xTaskCreate(ble_ui_update_task, "ble_ui", 4096, NULL, 3, NULL);
+    ESP_LOGI(TAG, "BLE UI update task started");
+  }
 }

@@ -1,4 +1,4 @@
-# Install script for directory: /home/bren/arduino/K3_Waveshare7_Dash/managed_components/espressif__cmake_utilities
+# Install script for directory: /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/managed_components/espressif__cmake_utilities
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

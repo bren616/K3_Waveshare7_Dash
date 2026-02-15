@@ -39,7 +39,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader/esp-idf/cmake_install.cmake")
+  include("/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/bootloader/esp-idf/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -57,6 +57,6 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-  file(WRITE "/home/bren/arduino/K3_Waveshare7_Dash/build/bootloader/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/bootloader/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

@@ -1,6 +1,6 @@
 {
     "idf.openOcdConfigs": [
-        "board/esp32p4-ftdi.cfg"
+        "board/esp32c6-ftdi.cfg"
     ],
     "idf.customExtraVars": {
         "IDF_TARGET": "esp32p4"
@@ -12,5 +12,6 @@
         "--compile-commands-dir=/home/bren/arduino/09_lvgl_demo_v8/build"
     ],
     "idf.port": "/dev/ttyACM0",
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "idf.currentSetup": "/home/bren/esp/v5.5.2/esp-idf"
 }

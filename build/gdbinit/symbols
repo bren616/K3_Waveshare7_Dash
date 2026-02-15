@@ -13,8 +13,8 @@ end
 
 # Load bootloader symbols
 set confirm off
-    add-symbol-file /home/bren/arduino/K3_Waveshare7_Dash/build/bootloader/bootloader.elf
+    add-symbol-file /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/bootloader/bootloader.elf
 set confirm on
 
 # Load application symbols
-file /home/bren/arduino/K3_Waveshare7_Dash/build/lvgl_demo_v8.elf
+file /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/lvgl_demo_v8.elf

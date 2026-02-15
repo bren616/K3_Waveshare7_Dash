@@ -39,6 +39,6 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/newlib/src/port/cmake_install.cmake")
+  include("/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/newlib/src/port/cmake_install.cmake")
 endif()
 

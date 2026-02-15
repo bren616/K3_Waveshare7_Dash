@@ -1,2 +1,2 @@
-source /home/bren/arduino/K3_Waveshare7_Dash/build/gdbinit/symbols
-source /home/bren/arduino/K3_Waveshare7_Dash/build/gdbinit/connect
+source /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/gdbinit/symbols
+source /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/gdbinit/connect

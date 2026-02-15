@@ -1,4 +1,4 @@
-# Install script for directory: /home/bren/arduino/K3_Waveshare7_Dash/managed_components/chmorgan__esp-file-iterator
+# Install script for directory: /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/managed_components/chmorgan__esp-file-iterator
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

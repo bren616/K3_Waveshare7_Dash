@@ -6,7 +6,7 @@ dependencies:
 description: ESP LVGL port
 repository: git://github.com/espressif/esp-bsp.git
 repository_info:
-  commit_sha: d15cf39696339b128eceb75665d806d8bd10959a
+  commit_sha: 445ce421e4f0ff6b2c582969ff61e19252bd44fe
   path: components/esp_lvgl_port
 url: https://github.com/espressif/esp-bsp/tree/master/components/esp_lvgl_port
-version: 2.7.0
+version: 2.7.1

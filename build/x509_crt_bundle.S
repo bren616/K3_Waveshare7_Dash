@@ -1,4 +1,4 @@
-/* * Data converted from /home/bren/arduino/K3_Waveshare7_Dash/build/esp-idf/mbedtls/x509_crt_bundle
+/* * Data converted from /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/mbedtls/x509_crt_bundle
  */
 .data
 #if !defined (__APPLE__) && !defined (__linux__)
