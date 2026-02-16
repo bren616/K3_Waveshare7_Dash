@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "lvgl_demo_v8",
-    "project_version":    "1471d46-dirty",
+    "project_version":    "ccf2f70-dirty",
     "project_path":       "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash",
     "idf_path":           "/home/bren/esp/v5.5.2/esp-idf",
     "build_dir":          "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build",

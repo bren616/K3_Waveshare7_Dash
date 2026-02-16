@@ -223,7 +223,7 @@ static const esp_gatts_attr_db_t rc_gatt_db[RC_IDX_NB] = {
                              (uint8_t *)&char_prop_write_indicate}},
 
     /* Config Characteristic Value */
-    [RC_IDX_CHAR_VAL_CONFIG] = {{ESP_GATT_RSP_BY_APP},
+    [RC_IDX_CHAR_VAL_CONFIG] = {{ESP_GATT_AUTO_RSP},
                                 {ESP_UUID_LEN_16,
                                  (uint8_t *)&rc_config_char_uuid,
                                  ESP_GATT_PERM_WRITE | ESP_GATT_PERM_READ, 512,
@@ -248,7 +248,7 @@ static const esp_gatts_attr_db_t rc_gatt_db[RC_IDX_NB] = {
 
     /* Notify Characteristic Value */
     [RC_IDX_CHAR_VAL_NOTIFY] =
-        {{ESP_GATT_RSP_BY_APP},
+        {{ESP_GATT_AUTO_RSP},
          {ESP_UUID_LEN_16, (uint8_t *)&rc_notify_char_uuid, ESP_GATT_PERM_WRITE,
           512, sizeof(char_val_default), (uint8_t *)char_val_default}},
 };
@@ -350,8 +350,41 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event,
              param->update_conn_params.timeout);
     break;
 
+  case ESP_GAP_BLE_SEC_REQ_EVT:
+    /* Accept the security request (pairing) from the peer */
+    ESP_LOGI(TAG, "Security request from peer");
+    esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
+    break;
+
+  case ESP_GAP_BLE_NC_REQ_EVT:
+    /* Numeric Comparison: auto-confirm (Just Works) */
+    ESP_LOGI(TAG, "NC request, passkey: %" PRIu32,
+             param->ble_security.key_notif.passkey);
+    esp_ble_confirm_reply(param->ble_security.ble_req.bd_addr, true);
+    break;
+
+  case ESP_GAP_BLE_PASSKEY_NOTIF_EVT:
+    ESP_LOGI(TAG, "Passkey notify: %" PRIu32,
+             param->ble_security.key_notif.passkey);
+    break;
+
+  case ESP_GAP_BLE_AUTH_CMPL_EVT: {
+    esp_bd_addr_t bd_addr;
+    memcpy(bd_addr, param->ble_security.auth_cmpl.bd_addr,
+           sizeof(esp_bd_addr_t));
+    ESP_LOGI(TAG,
+             "Auth complete: addr=%02x:%02x:%02x:%02x:%02x:%02x, success=%d",
+             bd_addr[0], bd_addr[1], bd_addr[2], bd_addr[3], bd_addr[4],
+             bd_addr[5], param->ble_security.auth_cmpl.success);
+    if (!param->ble_security.auth_cmpl.success) {
+      ESP_LOGW(TAG, "Auth failed, reason=0x%x",
+               param->ble_security.auth_cmpl.fail_reason);
+    }
+    break;
+  }
+
   default:
-    ESP_LOGI(TAG, "GAP event: %d", event);
+    ESP_LOGD(TAG, "GAP event: %d", event);
     break;
   }
 }
@@ -408,10 +441,10 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
     break;
   }
 
-  case ESP_GATTS_CONNECT_EVT:
+  case ESP_GATTS_CONNECT_EVT: {
     ESP_LOGI(TAG, "Client connected, conn_id=%d", param->connect.conn_id);
-    g_connected = true;
     g_conn_id = param->connect.conn_id;
+    g_connected = true;
     g_gatts_if = gatts_if;
 
     /* Reset data on new connection */
@@ -423,6 +456,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
       xSemaphoreGive(g_data_mutex);
     }
     break;
+  }
 
   case ESP_GATTS_DISCONNECT_EVT:
     ESP_LOGI(TAG, "Client disconnected, reason=0x%x", param->disconnect.reason);
@@ -625,6 +659,8 @@ esp_err_t ble_manager_init(void) {
 
   /* Set MTU - RaceChrono typically uses small packets */
   esp_ble_gatt_set_local_mtu(64);
+
+  /* No BLE security/pairing — RaceChrono DIY devices don't require it */
 
   ESP_LOGI(TAG, "BLE Manager initialized successfully");
   return ESP_OK;
