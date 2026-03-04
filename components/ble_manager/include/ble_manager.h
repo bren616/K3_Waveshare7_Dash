@@ -31,11 +31,11 @@ esp_err_t ble_manager_init(void);
 bool ble_manager_is_connected(void);
 
 /**
- * Get the current lap time value.
- * @param val_ms  Output: lap time in milliseconds
+ * Get the current delta speed value (scaled by 100).
+ * @param val     Output: delta speed
  * @param valid   Output: true if a value has been received
  */
-void ble_manager_get_lap_time(int32_t *val_ms, bool *valid);
+void ble_manager_get_delta_speed(int32_t *val, bool *valid);
 
 /**
  * Get the current delta value.

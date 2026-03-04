@@ -46,8 +46,21 @@ static const char *TAG = "BLE_MGR";
 #define RC_CHAR_NOTIFY_UUID 0x0006
 
 #define RC_MONITOR_COUNT 2
-#define RC_MONITOR_LAP_TIME 0
+#define RC_MONITOR_SPEED 0
 #define RC_MONITOR_DELTA 1
+
+/* Monitor config INDICATE command types */
+#define RC_CMD_REMOVE_ALL 0
+#define RC_CMD_REMOVE 1
+#define RC_CMD_ADD_INCOMPLETE 2
+#define RC_CMD_ADD_COMPLETE 3
+#define RC_CMD_UPDATE_ALL 4
+#define RC_CMD_UPDATE 5
+
+/* Monitor config WRITE response types */
+#define RC_RSP_SUCCESS 0
+#define RC_RSP_OUT_OF_SEQ 1
+#define RC_RSP_EQUATION_ERR 2
 
 /* ---------- BLE Constants ---------- */
 
@@ -92,10 +105,16 @@ static esp_gatt_if_t g_gatts_if = ESP_GATT_IF_NONE;
 
 /* Monitor data protected by mutex */
 static SemaphoreHandle_t g_data_mutex = NULL;
-static int32_t g_lap_time_ms = 0;
-static bool g_lap_time_valid = false;
+static int32_t g_delta_speed = 0;
+static bool g_delta_speed_valid = false;
 static int32_t g_delta_ms = 0;
 static bool g_delta_valid = false;
+
+/* Monitor config handshake state */
+static SemaphoreHandle_t g_config_rsp_sem = NULL;
+static uint8_t g_config_rsp_result = 0xFF;
+static uint8_t g_config_rsp_monitor_id = 0xFF;
+static TaskHandle_t g_config_task_handle = NULL;
 
 /* Device name buffer */
 static char g_device_name[16] = "RC DIY #0000";
@@ -290,13 +309,21 @@ static void rc_parse_notification(const uint8_t *data, uint16_t len) {
 
     if (xSemaphoreTake(g_data_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
       switch (monitor_id) {
-      case RC_MONITOR_LAP_TIME:
-        g_lap_time_ms = value;
-        g_lap_time_valid = true;
+      case RC_MONITOR_SPEED:
+        if (value >= 2000000000 || value <= -2000000000) {
+          g_delta_speed_valid = false;
+        } else {
+          g_delta_speed = value;
+          g_delta_speed_valid = true;
+        }
         break;
       case RC_MONITOR_DELTA:
-        g_delta_ms = value;
-        g_delta_valid = true;
+        if (value >= 2000000000 || value <= -2000000000) {
+          g_delta_valid = false;
+        } else {
+          g_delta_ms = value;
+          g_delta_valid = true;
+        }
         break;
       default:
         ESP_LOGW(TAG, "Unknown monitor ID: %d", monitor_id);
@@ -305,6 +332,183 @@ static void rc_parse_notification(const uint8_t *data, uint16_t len) {
       xSemaphoreGive(g_data_mutex);
     }
   }
+}
+
+/* ---------- Monitor Config Indication Helpers ---------- */
+
+/**
+ * Send a single indication on the Config characteristic (0x0005).
+ * Returns ESP_OK on success.
+ */
+static esp_err_t rc_send_config_indication(const uint8_t *data, uint16_t len) {
+  if (g_gatts_if == ESP_GATT_IF_NONE || !g_connected) {
+    return ESP_ERR_INVALID_STATE;
+  }
+  return esp_ble_gatts_send_indicate(
+      g_gatts_if, g_conn_id, g_gatt_handle_table[RC_IDX_CHAR_VAL_CONFIG], len,
+      (uint8_t *)data, true /* need_confirm = indication */);
+}
+
+/**
+ * Send a multi-part "Add" indication for a monitor with an equation string
+ * that may exceed the 17-byte single-payload limit.
+ *
+ * Splits the equation into 17-byte chunks:
+ *   - All chunks except the last use RC_CMD_ADD_INCOMPLETE (2)
+ *   - The final chunk uses RC_CMD_ADD_COMPLETE (3)
+ * Each chunk: [cmd] [monitor_id] [seq_num] [up to 17 bytes of equation]
+ *
+ * Waits 1 second between parts for the BLE indication confirm to complete.
+ */
+static esp_err_t rc_add_monitor(uint8_t monitor_id, const char *equation) {
+  const size_t PAYLOAD_MAX = 17; /* bytes 3-19 of the 20-byte packet */
+  size_t eq_len = strlen(equation);
+  size_t offset = 0;
+  uint8_t seq = 0;
+  esp_err_t ret;
+
+  ESP_LOGI(TAG, "Sending Add monitor %d, equation='%s' (%d bytes)", monitor_id,
+           equation, (int)eq_len);
+
+  while (offset < eq_len) {
+    size_t chunk_len = eq_len - offset;
+    bool is_last = (chunk_len <= PAYLOAD_MAX);
+    if (chunk_len > PAYLOAD_MAX) {
+      chunk_len = PAYLOAD_MAX;
+    }
+
+    uint8_t buf[20];
+    memset(buf, 0, sizeof(buf));
+    buf[0] = is_last ? RC_CMD_ADD_COMPLETE : RC_CMD_ADD_INCOMPLETE;
+    buf[1] = monitor_id;
+    buf[2] = seq;
+    memcpy(&buf[3], equation + offset, chunk_len);
+
+    ESP_LOGI(TAG, "  Part %d (%s): %d bytes", seq,
+             is_last ? "complete" : "incomplete", (int)chunk_len);
+
+    ret = rc_send_config_indication(buf, 3 + chunk_len);
+    if (ret != ESP_OK) {
+      ESP_LOGE(TAG, "Failed to send Add part %d: %s", seq,
+               esp_err_to_name(ret));
+      return ret;
+    }
+
+    offset += chunk_len;
+    seq++;
+
+    if (!is_last) {
+      /* Wait for BLE indication confirm before sending next part */
+      vTaskDelay(pdMS_TO_TICKS(1000));
+      if (!g_connected) {
+        return ESP_ERR_INVALID_STATE;
+      }
+    }
+  }
+
+  return ESP_OK;
+}
+
+/**
+ * Wait for a config response (WRITE on Config char) from RaceChrono.
+ * Returns true if response received and result == RC_RSP_SUCCESS.
+ */
+static bool rc_wait_config_response(uint8_t expected_monitor_id,
+                                    TickType_t timeout_ticks) {
+  if (xSemaphoreTake(g_config_rsp_sem, timeout_ticks) == pdTRUE) {
+    ESP_LOGI(TAG, "Config response: result=%d, monitor_id=%d",
+             g_config_rsp_result, g_config_rsp_monitor_id);
+    return (g_config_rsp_result == RC_RSP_SUCCESS &&
+            g_config_rsp_monitor_id == expected_monitor_id);
+  }
+  ESP_LOGW(TAG, "Config response timeout for monitor %d", expected_monitor_id);
+  return false;
+}
+
+/*
+ * RaceChrono equation strings for the Monitor API.
+ * Must use channel(device(...), identifier) syntax.
+ * See: https://racechrono.com/support/equations
+ *      https://racechrono.com/support/equations/identifiers
+ *
+ * "lap" device provides lap-related channels (lap_time, etc.)
+ * "gps" device provides speed, position, etc.
+ * Prefix "delta_" gives the delta channel variant.
+ */
+#define RC_EQ_DELTA_SPEED "channel(device(calc), delta_speed) * 100"
+#define RC_EQ_DELTA_TIME "channel(device(lap), delta_lap_time) * 1000"
+
+/**
+ * Monitor configuration task.
+ * Runs once after RaceChrono enables indications on Config char.
+ * Sends: Remove All -> Add monitor 0 (lap_time) -> wait response
+ *     -> Add monitor 1 (delta_speed) -> wait response.
+ */
+static void rc_monitor_config_task(void *arg) {
+  /* Small delay to let the connection settle */
+  vTaskDelay(pdMS_TO_TICKS(500));
+
+  if (!g_connected) {
+    ESP_LOGW(TAG, "Config task: not connected, aborting");
+    g_config_task_handle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+
+  /* Step 1: Remove all existing monitors */
+  ESP_LOGI(TAG, "Sending Remove All indication");
+  uint8_t remove_all = RC_CMD_REMOVE_ALL;
+  esp_err_t ret = rc_send_config_indication(&remove_all, 1);
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to send Remove All: %s", esp_err_to_name(ret));
+    g_config_task_handle = NULL;
+    vTaskDelete(NULL);
+    return;
+  }
+
+  /* Brief pause between indications (indication needs to be confirmed
+   * by the BLE stack before sending next) */
+  vTaskDelay(pdMS_TO_TICKS(1000));
+
+  if (!g_connected)
+    goto done;
+
+  /* Step 2: Add monitor 0 = delta_speed */
+  ret = rc_add_monitor(RC_MONITOR_SPEED, RC_EQ_DELTA_SPEED);
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to send Add monitor 0: %s", esp_err_to_name(ret));
+    goto done;
+  }
+
+  /* Wait for RaceChrono response */
+  if (!rc_wait_config_response(RC_MONITOR_SPEED, pdMS_TO_TICKS(10000))) {
+    ESP_LOGW(TAG, "Monitor 0 config failed or timed out");
+    goto done;
+  }
+
+  vTaskDelay(pdMS_TO_TICKS(500));
+
+  if (!g_connected)
+    goto done;
+
+  /* Step 3: Add monitor 1 = delta_lap_time */
+  ret = rc_add_monitor(RC_MONITOR_DELTA, RC_EQ_DELTA_TIME);
+  if (ret != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to send Add monitor 1: %s", esp_err_to_name(ret));
+    goto done;
+  }
+
+  /* Wait for RaceChrono response */
+  if (!rc_wait_config_response(RC_MONITOR_DELTA, pdMS_TO_TICKS(10000))) {
+    ESP_LOGW(TAG, "Monitor 1 config failed or timed out");
+    goto done;
+  }
+
+  ESP_LOGI(TAG, "Monitor configuration complete - data should flow now");
+
+done:
+  g_config_task_handle = NULL;
+  vTaskDelete(NULL);
 }
 
 /* ---------- GAP Event Handler ---------- */
@@ -449,11 +653,18 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
 
     /* Reset data on new connection */
     if (xSemaphoreTake(g_data_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-      g_lap_time_ms = 0;
-      g_lap_time_valid = false;
+      g_delta_speed = 0;
+      g_delta_speed_valid = false;
       g_delta_ms = 0;
       g_delta_valid = false;
       xSemaphoreGive(g_data_mutex);
+    }
+
+    /* Reset config response state */
+    g_config_rsp_result = 0xFF;
+    g_config_rsp_monitor_id = 0xFF;
+    /* Drain any stale semaphore counts */
+    while (xSemaphoreTake(g_config_rsp_sem, 0) == pdTRUE) {
     }
     break;
   }
@@ -462,9 +673,15 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
     ESP_LOGI(TAG, "Client disconnected, reason=0x%x", param->disconnect.reason);
     g_connected = false;
 
+    /* Stop config task if still running */
+    if (g_config_task_handle != NULL) {
+      vTaskDelete(g_config_task_handle);
+      g_config_task_handle = NULL;
+    }
+
     /* Reset data */
     if (xSemaphoreTake(g_data_mutex, pdMS_TO_TICKS(50)) == pdTRUE) {
-      g_lap_time_valid = false;
+      g_delta_speed_valid = false;
       g_delta_valid = false;
       xSemaphoreGive(g_data_mutex);
     }
@@ -489,9 +706,29 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
         ESP_LOG_BUFFER_HEX(TAG, param->write.value, param->write.len);
       } else if (param->write.handle ==
                  g_gatt_handle_table[RC_IDX_CHAR_VAL_CONFIG]) {
-        /* Monitor configuration from RaceChrono */
+        /* Monitor config response from RaceChrono */
         ESP_LOGI(TAG, "Config write received, len=%d", param->write.len);
         ESP_LOG_BUFFER_HEX(TAG, param->write.value, param->write.len);
+
+        if (param->write.len >= 2) {
+          g_config_rsp_result = param->write.value[0];
+          g_config_rsp_monitor_id = param->write.value[1];
+          ESP_LOGI(TAG, "Config response: result=%d, monitor_id=%d",
+                   g_config_rsp_result, g_config_rsp_monitor_id);
+          if (g_config_rsp_result == RC_RSP_EQUATION_ERR &&
+              param->write.len >= 8) {
+            uint16_t exc_type =
+                (param->write.value[2] << 8) | param->write.value[3];
+            uint16_t exc_pos =
+                (param->write.value[4] << 8) | param->write.value[5];
+            uint16_t exc_len =
+                (param->write.value[6] << 8) | param->write.value[7];
+            ESP_LOGE(TAG, "Equation error: type=%d, pos=%d, len=%d", exc_type,
+                     exc_pos, exc_len);
+          }
+          /* Signal the config task that a response arrived */
+          xSemaphoreGive(g_config_rsp_sem);
+        }
       } else if (param->write.handle ==
                  g_gatt_handle_table[RC_IDX_CHAR_CCC_CONFIG]) {
         /* CCC descriptor write (enable/disable indications) */
@@ -499,6 +736,12 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
             param->write.value[1] << 8 | param->write.value[0];
         if (descr_value == 0x0002) {
           ESP_LOGI(TAG, "Client enabled indications on config char");
+
+          /* Start monitor config task to send our monitor definitions */
+          if (g_config_task_handle == NULL) {
+            xTaskCreate(rc_monitor_config_task, "rc_cfg", 4096, NULL, 4,
+                        &g_config_task_handle);
+          }
         } else if (descr_value == 0x0000) {
           ESP_LOGI(TAG, "Client disabled indications on config char");
         }
@@ -574,6 +817,13 @@ esp_err_t ble_manager_init(void) {
   g_data_mutex = xSemaphoreCreateMutex();
   if (!g_data_mutex) {
     ESP_LOGE(TAG, "Failed to create mutex");
+    return ESP_ERR_NO_MEM;
+  }
+
+  /* Create config response semaphore (binary) */
+  g_config_rsp_sem = xSemaphoreCreateBinary();
+  if (!g_config_rsp_sem) {
+    ESP_LOGE(TAG, "Failed to create config response semaphore");
     return ESP_ERR_NO_MEM;
   }
 
@@ -668,13 +918,13 @@ esp_err_t ble_manager_init(void) {
 
 bool ble_manager_is_connected(void) { return g_connected; }
 
-void ble_manager_get_lap_time(int32_t *val_ms, bool *valid) {
+void ble_manager_get_delta_speed(int32_t *val, bool *valid) {
   if (xSemaphoreTake(g_data_mutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-    *val_ms = g_lap_time_ms;
-    *valid = g_lap_time_valid;
+    *val = g_delta_speed;
+    *valid = g_delta_speed_valid;
     xSemaphoreGive(g_data_mutex);
   } else {
-    *val_ms = 0;
+    *val = 0;
     *valid = false;
   }
 }
