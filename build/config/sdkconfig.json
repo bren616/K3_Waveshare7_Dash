@@ -386,6 +386,7 @@
     "EPPP_LINK_DEVICE_SPI": false,
     "EPPP_LINK_DEVICE_UART": true,
     "EPPP_LINK_USES_PPP": false,
+    "ESP32P4_EYE_C6_BOARD": false,
     "ESP32P4_REV_MAX_FULL": 199,
     "ESP32P4_REV_MIN_0": false,
     "ESP32P4_REV_MIN_1": true,

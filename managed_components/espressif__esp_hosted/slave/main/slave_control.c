@@ -11,6 +11,8 @@
 #include "esp_log.h"
 #include "esp_app_desc.h"
 #include "esp_private/wifi.h"
+#include "esp_image_format.h"
+#include "esp_partition.h"
 
 #include "slave_control.h"
 #include "esp_hosted_rpc.pb-c.h"
@@ -158,7 +160,18 @@ int g_private_key_passwd_len = 0;
 
 static esp_ota_handle_t handle;
 const esp_partition_t* update_partition = NULL;
-static int ota_msg = 0;
+static bool first_ota_write = false;
+
+#if H_OTA_CHECK_IMAGE_VALIDITY
+#define OTA_IMAGE_HEADER_SIZE (sizeof(esp_image_header_t) + \
+    sizeof(esp_image_segment_header_t) + sizeof(esp_app_desc_t))
+
+static const esp_app_desc_t *esp_hosted_get_app_desc_from_ota_img(const void *data_buf)
+{
+	return (const esp_app_desc_t *)((const uint8_t *)data_buf +
+			sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t));
+}
+#endif
 
 extern esp_err_t wlan_sta_rx_callback(void *buffer, uint16_t len, void *eb);
 extern esp_err_t wlan_ap_rx_callback(void *buffer, uint16_t len, void *eb);
@@ -208,12 +221,12 @@ void send_dhcp_dns_info_to_host(uint8_t network_up, uint8_t send_wifi_connected)
 				 &lkg_sta_connected_event, sizeof(wifi_event_sta_connected_t));
 	}
 
-	ESP_EARLY_LOGI(TAG, "Send DHCP-DNS status to Host: IP: %s, NM: %s, GW: %s, DNS IP: %s, Type: %"PRId32,
+	ESP_EARLY_LOGI(TAG, "Send DHCP-DNS status to Host: IP: %s, NM: %s, GW: %s, DNS IP: %s, Type: %d",
 			(char *)evnt_to_send->dhcp_ip,
 			(char *)evnt_to_send->dhcp_nm,
 			(char *)evnt_to_send->dhcp_gw,
 			(char *)evnt_to_send->dns_ip,
-			evnt_to_send->dns_type);
+			(int)evnt_to_send->dns_type);
 }
 
 /* Get DNS information */
@@ -461,7 +474,7 @@ static esp_err_t req_ota_begin_handler (Rpc *req,
 	}
 	ota_status = OTA_IN_PROGRESS;
 
-	ota_msg = 1;
+	first_ota_write = true;
 
 	resp_payload->resp = SUCCESS;
 	return ESP_OK;
@@ -489,13 +502,39 @@ static esp_err_t req_ota_write_handler (Rpc *req,
 		return ESP_ERR_NO_MEM;
 	}
 
-	if (ota_msg) {
-		ESP_LOGI(TAG, "Flashing image\n");
-		ota_msg = 0;
-	}
 	rpc__resp__otawrite__init(resp_payload);
 	resp->payload_case = RPC__PAYLOAD_RESP_OTA_WRITE;
 	resp->resp_ota_write = resp_payload;
+
+	// Check image validity before writing if it's the first chunk
+	if (first_ota_write) {
+		ESP_LOGI(TAG, "Flashing image\n");
+		first_ota_write = false;
+
+#if H_OTA_CHECK_IMAGE_VALIDITY
+		// sanity check: first write should contain enough data to query app header
+		if (req->req_ota_write->ota_data.len < OTA_IMAGE_HEADER_SIZE) {
+			ESP_LOGE(TAG, "First OTA write is too small to contain app header");
+			resp_payload->resp = ESP_ERR_INVALID_SIZE;
+			return ESP_OK;
+		}
+
+		// do additional OTA image checking
+		// - SPI FLASH mode of incoming OTA is compatible with current image
+		const esp_image_header_t *img_hdr = (const esp_image_header_t *)req->req_ota_write->ota_data.data;
+		const esp_app_desc_t *app_desc = esp_hosted_get_app_desc_from_ota_img(req->req_ota_write->ota_data.data);
+		esp_err_t validity_ret = esp_ota_check_image_validity(update_partition->type, img_hdr, app_desc);
+		if (validity_ret != ESP_OK) {
+			ESP_LOGE(TAG, "OTA image validity check failed with error: %s", esp_err_to_name(validity_ret));
+			resp_payload->resp = validity_ret;
+			return ESP_OK;
+		}
+#else
+		ESP_LOGW(TAG, "esp_ota_check_image_validity() not available in this IDF version, skipping validation");
+		resp_payload->resp = ESP_OK;
+		return ESP_OK;
+#endif
+	}
 
 	ret = esp_ota_write( handle, (const void *)req->req_ota_write->ota_data.data,
 			req->req_ota_write->ota_data.len);
@@ -2844,7 +2883,7 @@ static esp_err_t req_get_dhcp_dns_status(Rpc *req, Rpc *resp, void *priv_data)
 			resp_payload->dhcp_nm.data,
 			resp_payload->dhcp_gw.data,
 			resp_payload->dns_ip.data,
-			resp_payload->dns_type);
+			(int32_t)resp_payload->dns_type);
 
 	resp_payload->resp = ESP_OK;
 #else
@@ -3345,7 +3384,7 @@ static esp_err_t req_iface_mac_addr_set_get(Rpc *req, Rpc *resp, void *priv_data
 				// copy the mac address that was set in the response
 				RPC_RESP_COPY_BYTES_SRC_UNCHECKED(resp_payload->mac, req_payload->mac.data, len);
 			} else {
-				ESP_LOGE(TAG, "expected mac length %" PRIu16 ", but got %" PRIu16, len, req_payload->mac.len);
+				ESP_LOGE(TAG, "expected mac length %" PRIu32 ", but got %" PRIu32, (uint32_t)len, (uint32_t)req_payload->mac.len);
 				resp_payload->resp = ESP_ERR_INVALID_ARG;
 			}
 		} else {
@@ -4209,6 +4248,53 @@ static esp_err_t req_gpio_set_pull_mode(Rpc *req, Rpc *resp, void *priv_data)
 }
 #endif
 
+/* Function gets/sets scan parameters */
+static esp_err_t req_wifi_scan_params(Rpc *req,
+		Rpc *resp, void *priv_data)
+{
+	wifi_scan_default_params_t config = {0};
+	const wifi_scan_default_params_t *p_config = NULL;
+
+	RPC_TEMPLATE(RpcRespWifiScanParams, resp_wifi_scan_params,
+			RpcReqWifiScanParams, req_wifi_scan_params,
+			rpc__resp__wifi_scan_params__init);
+
+	if (req_payload->cmd == RPC_CMD__Set) {
+		if (!req_payload->is_config_null && req_payload->config) {
+			config.scan_time.passive = req_payload->config->scan_time->passive;
+			config.scan_time.active.min = req_payload->config->scan_time->active->min;
+			config.scan_time.active.max = req_payload->config->scan_time->active->max;
+			config.home_chan_dwell_time = req_payload->config->home_chan_dwell_time;
+			ESP_LOGI(TAG, "rpc_wifi_scan_params_set: passive [%" PRIu32 "], active_min [%" PRIu32 "], active_max [%" PRIu32 "], home_chan_dwell_time [%" PRIu8 "]",
+				config.scan_time.passive, config.scan_time.active.min, config.scan_time.active.max, config.home_chan_dwell_time);
+			p_config = &config;
+		} else {
+			ESP_LOGE(TAG, "rpc_wifi_scan_params_set: config is null");
+		}
+		RPC_RET_FAIL_IF(esp_wifi_set_scan_parameters(p_config));
+	} else if (req_payload->cmd == RPC_CMD__Get) {
+
+		RPC_RET_FAIL_IF(esp_wifi_get_scan_parameters(&config));
+
+		RPC_ALLOC_ELEMENT(WifiScanDefaultParams, resp_payload->config, wifi_scan_default_params__init);
+		RPC_ALLOC_ELEMENT(WifiScanTime, resp_payload->config->scan_time, wifi_scan_time__init);
+		RPC_ALLOC_ELEMENT(WifiActiveScanTime, resp_payload->config->scan_time->active, wifi_active_scan_time__init);
+
+		resp_payload->config->scan_time->passive = config.scan_time.passive;
+		resp_payload->config->scan_time->active->min = config.scan_time.active.min;
+		resp_payload->config->scan_time->active->max = config.scan_time.active.max;
+		resp_payload->config->home_chan_dwell_time = config.home_chan_dwell_time;
+
+		ESP_LOGI(TAG, "rpc_wifi_scan_params_get: passive [%" PRIu32 "], active_min [%" PRIu32 "], active_max [%" PRIu32 "], home_chan_dwell_time [%" PRIu8 "]",
+			config.scan_time.passive, config.scan_time.active.min, config.scan_time.active.max, config.home_chan_dwell_time);
+	} else {
+		RPC_RET_FAIL_IF(ESP_ERR_INVALID_ARG);
+	}
+
+err:
+	return ESP_OK;
+}
+
 static esp_rpc_req_t req_table[] = {
 	{
 		.req_num = RPC_ID__Req_GetMACAddress ,
@@ -4289,6 +4375,10 @@ static esp_rpc_req_t req_table[] = {
 	{
 		.req_num = RPC_ID__Req_WifiSetConfig,
 		.command_handler = req_wifi_set_config
+	},
+	{
+		.req_num = RPC_ID__Req_WifiScanParams,
+		.command_handler = req_wifi_scan_params
 	},
 	{
 		.req_num = RPC_ID__Req_WifiGetConfig,

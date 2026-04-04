@@ -68,7 +68,7 @@ dependencies:
       type: service
     version: 1.2.0
   espressif/esp_hosted:
-    component_hash: 5e1f8af8b51b47714eafb30c59bac952d6abc03125c01cb6a970f368d1e1cb83
+    component_hash: 9eea9ce83444a412b4a02311f787f3639a5d29fe67e6df83863010dd68ab250b
     dependencies:
     - name: idf
       require: private
@@ -76,7 +76,7 @@ dependencies:
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 2.11.7
+    version: 2.12.0
   espressif/esp_lcd_ek79007:
     component_hash: 8005700b7f10c7136b6e2a3f19a48f972aa1d13ed107ed298574e8d24d17ea83
     dependencies:
@@ -118,7 +118,7 @@ dependencies:
       type: service
     version: 1.2.0~1
   espressif/esp_lvgl_port:
-    component_hash: 88bbda87376ae20fabfbb5d794ed78d23b3b4a186ecfafecf2edbf06223fd6c9
+    component_hash: b6360960f47b6776462e7092861b3ea66477ffb762a01baa0aecbb3d74cd50f4
     dependencies:
     - name: idf
       require: private
@@ -130,7 +130,7 @@ dependencies:
     source:
       registry_url: https://components.espressif.com
       type: service
-    version: 2.7.1
+    version: 2.7.2
   espressif/esp_serial_slave_link:
     component_hash: ac1776806de0a6e371c84e87898bb983e19ce62aa7f1e2e5c4a3b0234a575d2c
     dependencies:
@@ -161,6 +161,16 @@ dependencies:
       registry_url: https://components.espressif.com/
       type: service
     version: 1.3.2
+  espressif/led_strip:
+    component_hash: 28621486f77229aaf81c71f5e15d6fbf36c2949cf11094e07090593e659e7639
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 3.0.3
   espressif/wifi_remote_over_eppp:
     component_hash: ac4d13625cc9f88597cd612d2758580fac287d8ec731b606f2a0720d28cda6cd
     dependencies:
@@ -223,9 +233,10 @@ direct_dependencies:
 - chmorgan/esp-file-iterator
 - espressif/esp_hosted
 - espressif/esp_wifi_remote
+- espressif/led_strip
 - idf
 - lvgl/lvgl
 - waveshare/esp32_p4_wifi6_touch_lcd_7b
-manifest_hash: a04128151cdf68513c3b14171e38538bd9d913b0f220d8d248b38633f29b80b2
+manifest_hash: 21bc7f24f1c64c337bfe82d07c8162fd3a5b48005da637fc5d7a7414fbf017e6
 target: esp32p4
 version: 2.0.0

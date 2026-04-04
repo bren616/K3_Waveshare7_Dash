@@ -37116,6 +37116,16 @@
                             },
                             {
                                 "children": [],
+                                "depends_on": "SLAVE_IDF_TARGET_ESP32C6 && <choice ESP_HOSTED_P4_DEV_BOARD>",
+                                "help": null,
+                                "id": "ESP32P4_EYE_C6_BOARD",
+                                "name": "ESP32P4_EYE_C6_BOARD",
+                                "range": null,
+                                "title": "ESP32-P4-EYE Board with on-board C6",
+                                "type": "bool"
+                            },
+                            {
+                                "children": [],
                                 "depends_on": "SLAVE_IDF_TARGET_ESP32C5 && <choice ESP_HOSTED_P4_DEV_BOARD>",
                                 "help": null,
                                 "id": "ESP_HOSTED_P4_C5_CORE_BOARD",
@@ -39112,7 +39122,7 @@
                             {
                                 "children": [],
                                 "depends_on": "ESP_HOSTED_UART_HOST_INTERFACE && ESP_HOSTED_ENABLED",
-                                "help": "GPIO pin for Resetting ESP SDIO slave device. Should be connected to RST/EN of ESP SDIO slave device.",
+                                "help": "GPIO pin for Resetting slave ESP. Should be connected to RST/EN of slave ESP.",
                                 "id": "ESP_HOSTED_UART_GPIO_RESET_SLAVE",
                                 "name": "ESP_HOSTED_UART_GPIO_RESET_SLAVE",
                                 "range": null,

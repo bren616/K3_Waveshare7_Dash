@@ -13,6 +13,7 @@
 #include "lvgl.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "shift_lights.h"
 #include "ui.h"
 
 #include <inttypes.h>
@@ -199,6 +200,19 @@ void app_main(void) {
 
   bsp_display_unlock();
 
+  /* Initialize shift lights (WS2812B LEDs) */
+  esp_err_t sl_ret = shift_lights_init();
+  if (sl_ret != ESP_OK) {
+    ESP_LOGE(TAG, "Shift lights init failed: %s", esp_err_to_name(sl_ret));
+  }
+
+#ifdef SHIFT_LIGHT_TEST_MODE
+  /* Launch the shift-light test sweep instead of waiting for real CAN data */
+  extern void shift_light_test_task(void *arg);
+  xTaskCreate(shift_light_test_task, "sl_test", 4096, NULL, 4, NULL);
+  ESP_LOGW(TAG, "*** SHIFT LIGHT TEST MODE ACTIVE ***");
+#endif
+
   /* Initialize BLE manager (runs in background) */
   esp_err_t ble_ret = ble_manager_init();
   if (ble_ret != ESP_OK) {
@@ -209,3 +223,54 @@ void app_main(void) {
     ESP_LOGI(TAG, "BLE UI update task started");
   }
 }
+
+/*
+ * ===== SHIFT LIGHT TEST SWEEP =====
+ *
+ * Compile with -DSHIFT_LIGHT_TEST_MODE to enable.
+ * Ramps RPM 0 → 14000 in steps of 250, pauses at each step so you
+ * can verify each LED threshold. Holds at 14000 for 5 s to test the
+ * Red/White flash mode, then ramps back down to 0 and repeats.
+ */
+#ifdef SHIFT_LIGHT_TEST_MODE
+void shift_light_test_task(void *arg) {
+  const int32_t rpm_max = 14000;
+  const int32_t rpm_step = 250;
+  const int step_delay_ms = 300;  /* time at each RPM step */
+  const int flash_hold_ms = 5000; /* hold time above 13000 RPM */
+
+  ESP_LOGI(TAG,
+           "Shift light test: sweeping 0 -> %ld -> 0 (step=%ld, delay=%dms)",
+           (long)rpm_max, (long)rpm_step, step_delay_ms);
+
+  while (1) {
+    /* Ramp UP */
+    for (int32_t rpm = 0; rpm <= rpm_max; rpm += rpm_step) {
+      ESP_LOGI(TAG, "TEST RPM: %ld", (long)rpm);
+      shift_lights_update(rpm);
+      vTaskDelay(pdMS_TO_TICKS(step_delay_ms));
+    }
+
+    /* Hold in flash zone */
+    ESP_LOGW(TAG, "TEST: Holding at %ld RPM (flash zone) for %d ms",
+             (long)rpm_max, flash_hold_ms);
+    TickType_t hold_end = xTaskGetTickCount() + pdMS_TO_TICKS(flash_hold_ms);
+    while (xTaskGetTickCount() < hold_end) {
+      shift_lights_update(rpm_max);
+      vTaskDelay(pdMS_TO_TICKS(50)); /* fast updates to show flashing */
+    }
+
+    /* Ramp DOWN */
+    for (int32_t rpm = rpm_max; rpm >= 0; rpm -= rpm_step) {
+      ESP_LOGI(TAG, "TEST RPM: %ld", (long)rpm);
+      shift_lights_update(rpm);
+      vTaskDelay(pdMS_TO_TICKS(step_delay_ms));
+    }
+
+    /* Pause before next cycle */
+    ESP_LOGI(TAG, "TEST: Cycle complete. Restarting in 2s...");
+    shift_lights_update(0);
+    vTaskDelay(pdMS_TO_TICKS(2000));
+  }
+}
+#endif

@@ -287,7 +287,14 @@ static esp_err_t transport_drv_sta_tx(void *h, void *buffer, size_t len)
 
 	/*  Prepare transport buffer directly consumable */
 	copy_buff = mempool_alloc(((struct mempool*)chan_arr[ESP_STA_IF]->memp), MAX_TRANSPORT_BUFFER_SIZE, true);
-	assert(copy_buff);
+	if (!copy_buff) {
+		ESP_LOGW(TAG, "STA TX: mempool_alloc failed, dropping pkt (len=%u)", len);
+#if defined(ESP_ERR_ESP_NETIF_TX_FAILED)
+		return ESP_ERR_ESP_NETIF_TX_FAILED;
+#else
+		return ESP_ERR_ESP_NETIF_NO_MEM;
+#endif
+	}
 	g_h.funcs->_h_memcpy(copy_buff+H_ESP_PAYLOAD_HEADER_OFFSET, buffer, len);
 
 	return esp_hosted_tx(ESP_STA_IF, 0, copy_buff, len, H_BUFF_ZEROCOPY, copy_buff, transport_sta_free_cb, 0);
@@ -315,7 +322,14 @@ static esp_err_t transport_drv_ap_tx(void *h, void *buffer, size_t len)
 
 	/*  Prepare transport buffer directly consumable */
 	copy_buff = mempool_alloc(((struct mempool*)chan_arr[ESP_AP_IF]->memp), MAX_TRANSPORT_BUFFER_SIZE, true);
-	assert(copy_buff);
+	if (!copy_buff) {
+		ESP_LOGW(TAG, "AP TX: mempool_alloc failed, dropping pkt (len=%u)", len);
+#if defined(ESP_ERR_ESP_NETIF_TX_FAILED)
+		return ESP_ERR_ESP_NETIF_TX_FAILED;
+#else
+		return ESP_ERR_ESP_NETIF_NO_MEM;
+#endif
+	}
 	g_h.funcs->_h_memcpy(copy_buff+H_ESP_PAYLOAD_HEADER_OFFSET, buffer, len);
 
 	return esp_hosted_tx(ESP_AP_IF, 0, copy_buff, len, H_BUFF_ZEROCOPY, copy_buff, transport_ap_free_cb, 0);
@@ -767,6 +781,23 @@ static int process_init_event(uint8_t *evt_buf, uint16_t len)
 				(*(pos + 4) << 16) |
 				(*(pos + 5) << 24);
 			ESP_LOGD(TAG, "slave fw version: 0x%08" PRIx32, slave_fw_version);
+		} else if (*pos == ESP_PRIV_TRANS_SDIO_MODE) {
+#if H_TRANSPORT_IN_USE == H_TRANSPORT_SDIO
+			uint8_t slave_sdio_mode = *(pos + 2);
+#if H_SDIO_HOST_RX_MODE == H_SDIO_HOST_STREAMING_MODE
+			uint8_t host_sdio_mode = 1;
+#else
+			uint8_t host_sdio_mode = 0;
+#endif
+			ESP_LOGI(TAG, "SDIO mode: slave: %s, host: %s",
+					slave_sdio_mode ? "streaming" : "packet",
+					host_sdio_mode ? "streaming" : "packet");
+
+			if (slave_sdio_mode && !host_sdio_mode) {
+				ESP_LOGE(TAG, "SDIO mode mismatch: slave is in streaming mode, but host is in packet mode. Aborting.");
+				assert(0);
+			}
+#endif
 		} else {
 			ESP_LOGD(TAG, "Unsupported EVENT: %2x", *pos);
 		}

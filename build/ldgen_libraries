@@ -181,8 +181,12 @@
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/fatfs/libfatfs.a
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/espressif__esp_lcd_ek79007/libespressif__esp_lcd_ek79007.a
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/espressif__esp_lcd_touch_gt911/libespressif__esp_lcd_touch_gt911.a
+/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/espressif__led_strip/libespressif__led_strip.a
+/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/shift_lights/libshift_lights.a
+/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/espressif__led_strip/libespressif__led_strip.a
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/can_manager/libcan_manager.a
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/waveshare__esp32_p4_wifi6_touch_lcd_7b/libwaveshare__esp32_p4_wifi6_touch_lcd_7b.a
+/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/shift_lights/libshift_lights.a
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/espressif__esp_hosted/libespressif__esp_hosted.a
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/ble_manager/libble_manager.a
 /home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/chmorgan__esp-libhelix-mp3/libchmorgan__esp-libhelix-mp3.a

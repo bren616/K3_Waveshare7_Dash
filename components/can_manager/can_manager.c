@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "shift_lights.h"
 
 static const char *TAG = "can_manager";
 
@@ -64,6 +65,11 @@ static void can_rx_task(void *arg) {
             bsp_display_lock(0);
             update_lv_label(var, var->current_val);
             bsp_display_unlock();
+
+            /* Drive shift lights from RPM (CAN ID 0x100) */
+            if (message.identifier == 0x100) {
+              shift_lights_update(raw_val);
+            }
           }
         }
       }
