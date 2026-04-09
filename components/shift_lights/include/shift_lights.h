@@ -2,6 +2,7 @@
 #define SHIFT_LIGHTS_H
 
 #include "esp_err.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -25,6 +26,38 @@ esp_err_t shift_lights_init(void);
  * @param rpm Current engine RPM value.
  */
 void shift_lights_update(int32_t rpm);
+
+/* ---------- Testable computation API ---------- */
+
+#define SHIFT_LIGHT_NUM_LEDS 10
+
+/** Computed state for a single LED. */
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} shift_lights_pixel_t;
+
+/** Full LED strip computed state. */
+typedef struct {
+    shift_lights_pixel_t pixels[SHIFT_LIGHT_NUM_LEDS];
+    bool flash_state;           /**< Current flash toggle (input/output) */
+    int64_t last_flash_toggle_us; /**< Timestamp of last toggle (input/output) */
+} shift_lights_led_state_t;
+
+/**
+ * @brief Pure computation: given RPM and time, compute what each LED should show.
+ *
+ * This function has NO hardware side-effects and is safe to call from tests.
+ * On entry, state->flash_state and state->last_flash_toggle_us should carry
+ * the values from the previous call (or be zeroed for the first call).
+ *
+ * @param rpm     Current engine RPM.
+ * @param now_us  Current time in microseconds (e.g. from esp_timer_get_time).
+ * @param state   [in/out] LED state buffer.
+ */
+void shift_lights_compute(int32_t rpm, int64_t now_us,
+                          shift_lights_led_state_t *state);
 
 #ifdef __cplusplus
 }

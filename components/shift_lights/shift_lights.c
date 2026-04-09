@@ -10,8 +10,7 @@ static const char *TAG = "SHIFT_LIGHTS";
 
 /* ---------- Configuration ---------- */
 
-#define SHIFT_LIGHT_GPIO 48
-#define SHIFT_LIGHT_NUM_LEDS 10
+#define SHIFT_LIGHT_GPIO 49
 
 /* RPM thresholds: 9 thresholds map to LEDs 0–8 (left to right).
  * LED 9 only participates in the >13000 RPM flash-all mode. */
@@ -41,8 +40,7 @@ static const char *TAG = "SHIFT_LIGHTS";
 /* ---------- State ---------- */
 
 static led_strip_handle_t g_strip = NULL;
-static bool g_flash_state = false;         /* toggles every 500 ms */
-static int64_t g_last_flash_toggle_us = 0; /* esp_timer timestamp */
+static shift_lights_led_state_t g_state;  /* persistent flash state + pixels */
 
 /* Per-LED colour lookup (index = LED position 0–8) */
 static const uint8_t led_colors[][3] = {
@@ -56,6 +54,63 @@ static const uint8_t led_colors[][3] = {
     {COLOR_RED_R, COLOR_RED_G, COLOR_RED_B},          /* LED 7 */
     {COLOR_RED_R, COLOR_RED_G, COLOR_RED_B},          /* LED 8 */
 };
+
+/* ---------- Pure computation (no hardware) ---------- */
+
+void shift_lights_compute(int32_t rpm, int64_t now_us,
+                          shift_lights_led_state_t *state) {
+  /* --- Flash mode: > 13000 RPM --- */
+  if (rpm > RPM_FLASH_THRESHOLD) {
+    if (now_us - state->last_flash_toggle_us >=
+        (int64_t)FLASH_INTERVAL_MS * 1000) {
+      state->flash_state = !state->flash_state;
+      state->last_flash_toggle_us = now_us;
+    }
+
+    uint8_t r, g, b;
+    if (state->flash_state) {
+      r = COLOR_RED_R;
+      g = COLOR_RED_G;
+      b = COLOR_RED_B;
+    } else {
+      r = COLOR_WHITE_R;
+      g = COLOR_WHITE_G;
+      b = COLOR_WHITE_B;
+    }
+
+    for (int i = 0; i < SHIFT_LIGHT_NUM_LEDS; i++) {
+      state->pixels[i].r = r;
+      state->pixels[i].g = g;
+      state->pixels[i].b = b;
+    }
+    return;
+  }
+
+  /* Reset flash timer when not in flash zone */
+  state->flash_state = false;
+  state->last_flash_toggle_us = 0;
+
+  /* --- Normal progressive mode --- */
+  int num_lit = 0;
+  if (rpm >= RPM_THRESHOLD_START) {
+    num_lit = 1 + (rpm - RPM_THRESHOLD_START) / RPM_THRESHOLD_STEP;
+    if (num_lit > RPM_THRESHOLD_COUNT) {
+      num_lit = RPM_THRESHOLD_COUNT;
+    }
+  }
+
+  for (int i = 0; i < SHIFT_LIGHT_NUM_LEDS; i++) {
+    if (i < num_lit) {
+      state->pixels[i].r = led_colors[i][0];
+      state->pixels[i].g = led_colors[i][1];
+      state->pixels[i].b = led_colors[i][2];
+    } else {
+      state->pixels[i].r = 0;
+      state->pixels[i].g = 0;
+      state->pixels[i].b = 0;
+    }
+  }
+}
 
 /* ---------- Public API ---------- */
 
@@ -82,6 +137,9 @@ esp_err_t shift_lights_init(void) {
     return ret;
   }
 
+  /* Zero the persistent state */
+  memset(&g_state, 0, sizeof(g_state));
+
   /* All LEDs off on startup — clear + small delay for WS2812B reset */
   led_strip_clear(g_strip);
   vTaskDelay(pdMS_TO_TICKS(10));
@@ -96,54 +154,13 @@ void shift_lights_update(int32_t rpm) {
     return;
   }
 
-  /* --- Flash mode: > 13000 RPM --- */
-  if (rpm > RPM_FLASH_THRESHOLD) {
-    int64_t now_us = esp_timer_get_time();
-    if (now_us - g_last_flash_toggle_us >= (int64_t)FLASH_INTERVAL_MS * 1000) {
-      g_flash_state = !g_flash_state;
-      g_last_flash_toggle_us = now_us;
-    }
+  int64_t now_us = esp_timer_get_time();
+  shift_lights_compute(rpm, now_us, &g_state);
 
-    uint8_t r, g, b;
-    if (g_flash_state) {
-      r = COLOR_RED_R;
-      g = COLOR_RED_G;
-      b = COLOR_RED_B;
-    } else {
-      r = COLOR_WHITE_R;
-      g = COLOR_WHITE_G;
-      b = COLOR_WHITE_B;
-    }
-
-    for (int i = 0; i < SHIFT_LIGHT_NUM_LEDS; i++) {
-      led_strip_set_pixel(g_strip, i, r, g, b);
-    }
-    led_strip_refresh(g_strip);
-    return;
-  }
-
-  /* Reset flash timer when not in flash zone */
-  g_flash_state = false;
-  g_last_flash_toggle_us = 0;
-
-  /* --- Normal progressive mode --- */
-  /* Count how many LEDs should be lit (0–9) */
-  int num_lit = 0;
-  if (rpm >= RPM_THRESHOLD_START) {
-    num_lit = 1 + (rpm - RPM_THRESHOLD_START) / RPM_THRESHOLD_STEP;
-    if (num_lit > RPM_THRESHOLD_COUNT) {
-      num_lit = RPM_THRESHOLD_COUNT;
-    }
-  }
-
-  /* Set lit LEDs left-to-right (indices 0 .. num_lit-1) */
+  /* Apply computed state to hardware */
   for (int i = 0; i < SHIFT_LIGHT_NUM_LEDS; i++) {
-    if (i < num_lit) {
-      led_strip_set_pixel(g_strip, i, led_colors[i][0], led_colors[i][1],
-                          led_colors[i][2]);
-    } else {
-      led_strip_set_pixel(g_strip, i, 0, 0, 0);
-    }
+    led_strip_set_pixel(g_strip, i, g_state.pixels[i].r, g_state.pixels[i].g,
+                        g_state.pixels[i].b);
   }
   led_strip_refresh(g_strip);
 }
