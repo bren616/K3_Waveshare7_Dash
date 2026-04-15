@@ -28,11 +28,21 @@ lv_obj_t *ui_LapTimeLabel = NULL;
 
 // build funtions
 
+static void event_handler_swipe1(lv_event_t * e)
+{
+    lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+    if (dir == LV_DIR_LEFT || dir == LV_DIR_RIGHT) {
+        lv_disp_load_scr(ui_Screen2);
+    }
+}
+
 void ui_Screen1_screen_init(void) {
   ui_Screen1 = lv_obj_create(NULL);
   lv_obj_clear_flag(ui_Screen1, LV_OBJ_FLAG_SCROLLABLE); /// Flags
   lv_obj_set_style_bg_img_src(ui_Screen1, &ui_img_frame_1_png,
                               LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_Screen1, event_handler_swipe1, LV_EVENT_GESTURE, NULL);
 
   ui_RPMLabel = lv_label_create(ui_Screen1);
   lv_obj_set_width(ui_RPMLabel, LV_SIZE_CONTENT);  /// 1

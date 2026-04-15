@@ -39,6 +39,13 @@ void init_can_manager(void);
  */
 void set_dash_variables(DashVariable *vars, size_t count);
 
+/**
+ * @brief Update an LVGL label (+ Screen2 mirror) from a DashVariable
+ * @param var  Pointer to the DashVariable to update
+ * @param value  The new value to display
+ */
+void update_lv_label(DashVariable *var, int32_t value);
+
 #ifdef __cplusplus
 }
 #endif

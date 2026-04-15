@@ -16,24 +16,68 @@ void set_dash_variables(DashVariable *vars, size_t count) {
   g_dash_var_count = count;
 }
 
-static void update_lv_label(DashVariable *var, int32_t value) {
-  if (var->lv_label_ptr && *var->lv_label_ptr) {
-    // Need to take LVGL lock if not in GUI task?
-    // Assuming this is called from task context, we might need a mutex or LVGL
-    // wrapping. But specific implementation depends on how LVGL is running. For
-    // simplicity, we assume we might need to lock or we use
-    // `lv_label_set_text_fmt` carefully. In this project structure,
-    // bsp_display_lock(0) is available in main. But here we are in component.
-    // We will assume `lvgl_gui` usage or just raw calls for now, user can wrap
-    // if crashing. However, usually `lv_task_handler` runs in a loop. Updating
-    // from another task requires a lock. We will simple use the function, but
-    // it's unsafe without lock. Ideally we should use `lv_async_call` or
-    // similar, but let's just update.
+#include <string.h>
 
-    // Format string based on value range or name could be better, but generic
-    // integer for now. Some might be floats (temps). The raw value logic
-    // implies integers.
+extern lv_obj_t * ui_Screen2;
+extern lv_obj_t * ui_Screen2_RPMLabel;
+extern lv_obj_t * ui_Screen2_RPMBar;
+extern lv_obj_t * ui_Screen2_GearLabel;
+extern lv_obj_t * ui_Screen2_WaterTempLabel;
+extern lv_obj_t * ui_Screen2_WaterTempBar;
+extern lv_obj_t * ui_Screen2_OilTempLabel;
+extern lv_obj_t * ui_Screen2_OilTempBar;
+extern lv_obj_t * ui_Screen2_OilPressLabel;
+extern lv_obj_t * ui_Screen2_OilPressBar;
+extern lv_obj_t * ui_Screen2_FLTempLabel;
+extern lv_obj_t * ui_Screen2_FRTempLabel;
+extern lv_obj_t * ui_Screen2_FLPressLabel;
+extern lv_obj_t * ui_Screen2_FRPressLabel;
+extern lv_obj_t * ui_Screen2_RLTempLabel;
+extern lv_obj_t * ui_Screen2_RRTempLabel;
+extern lv_obj_t * ui_Screen2_RLPressLabel;
+extern lv_obj_t * ui_Screen2_RRPressLabel;
+
+void update_lv_label(DashVariable *var, int32_t value) {
+  if (var->lv_label_ptr && *var->lv_label_ptr) {
     lv_label_set_text_fmt(*var->lv_label_ptr, "%ld", (long)value);
+  }
+
+  // Also update ui_Screen2 elements if they are initialized
+  if (!ui_Screen2) return;
+
+  if (strcmp(var->name, "RPM") == 0) {
+      if(ui_Screen2_RPMLabel) lv_label_set_text_fmt(ui_Screen2_RPMLabel, "%ld", (long)value);
+      if(ui_Screen2_RPMBar) lv_bar_set_value(ui_Screen2_RPMBar, value, LV_ANIM_OFF);
+  } else if (strcmp(var->name, "Gear") == 0) {
+      if(ui_Screen2_GearLabel) {
+          if (value == 0) lv_label_set_text(ui_Screen2_GearLabel, "N");
+          else lv_label_set_text_fmt(ui_Screen2_GearLabel, "%ld", (long)value);
+      }
+  } else if (strcmp(var->name, "WaterTemp") == 0) {
+      if(ui_Screen2_WaterTempLabel) lv_label_set_text_fmt(ui_Screen2_WaterTempLabel, "%ld", (long)value);
+      if(ui_Screen2_WaterTempBar) lv_bar_set_value(ui_Screen2_WaterTempBar, value, LV_ANIM_OFF);
+  } else if (strcmp(var->name, "OilTemp") == 0) {
+      if(ui_Screen2_OilTempLabel) lv_label_set_text_fmt(ui_Screen2_OilTempLabel, "%ld", (long)value);
+      if(ui_Screen2_OilTempBar) lv_bar_set_value(ui_Screen2_OilTempBar, value, LV_ANIM_OFF);
+  } else if (strcmp(var->name, "OilPress") == 0) {
+      if(ui_Screen2_OilPressLabel) lv_label_set_text_fmt(ui_Screen2_OilPressLabel, "%ld", (long)value);
+      if(ui_Screen2_OilPressBar) lv_bar_set_value(ui_Screen2_OilPressBar, value, LV_ANIM_OFF);
+  } else if (strcmp(var->name, "FLTemp") == 0) {
+      if(ui_Screen2_FLTempLabel) lv_label_set_text_fmt(ui_Screen2_FLTempLabel, "%ld °C", (long)value);
+  } else if (strcmp(var->name, "FRTemp") == 0) {
+      if(ui_Screen2_FRTempLabel) lv_label_set_text_fmt(ui_Screen2_FRTempLabel, "%ld °C", (long)value);
+  } else if (strcmp(var->name, "FLPress") == 0) {
+      if(ui_Screen2_FLPressLabel) lv_label_set_text_fmt(ui_Screen2_FLPressLabel, "%ld PSI", (long)value);
+  } else if (strcmp(var->name, "FRPress") == 0) {
+      if(ui_Screen2_FRPressLabel) lv_label_set_text_fmt(ui_Screen2_FRPressLabel, "%ld PSI", (long)value);
+  } else if (strcmp(var->name, "RLTemp") == 0) {
+      if(ui_Screen2_RLTempLabel) lv_label_set_text_fmt(ui_Screen2_RLTempLabel, "%ld °C", (long)value);
+  } else if (strcmp(var->name, "RRTemp") == 0) {
+      if(ui_Screen2_RRTempLabel) lv_label_set_text_fmt(ui_Screen2_RRTempLabel, "%ld °C", (long)value);
+  } else if (strcmp(var->name, "RLPress") == 0) {
+      if(ui_Screen2_RLPressLabel) lv_label_set_text_fmt(ui_Screen2_RLPressLabel, "%ld PSI", (long)value);
+  } else if (strcmp(var->name, "RRPress") == 0) {
+      if(ui_Screen2_RRPressLabel) lv_label_set_text_fmt(ui_Screen2_RRPressLabel, "%ld PSI", (long)value);
   }
 }
 

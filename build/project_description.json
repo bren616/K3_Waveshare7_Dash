@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "lvgl_demo_v8",
-    "project_version":    "bc84606-dirty",
+    "project_version":    "71d6b35-dirty",
     "project_path":       "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash",
     "idf_path":           "/home/bren/esp/v5.5.2/esp-idf",
     "build_dir":          "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build",
@@ -1510,7 +1510,7 @@
             "managed_reqs": [ "lvgl__lvgl" ],
             "managed_priv_reqs": [ "espressif__esp_hosted", "espressif__esp_wifi_remote", "espressif__led_strip" ],
             "file": "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/build/esp-idf/main/libmain.a",
-            "sources": [ "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/main.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/components/ui_comp_hook.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/fonts/ui_font_Font1.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/fonts/ui_font_Font2.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/fonts/ui_font_timefont.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/images/ui_img_frame_1_png.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/images/ui_img_shift_light5_png.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/images/ui_img_shift_light_red_png.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/screens/ui_Screen1.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/ui.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/ui_helpers.c" ],
+            "sources": [ "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/main.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/components/ui_comp_hook.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/fonts/ui_font_Font1.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/fonts/ui_font_Font2.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/fonts/ui_font_timefont.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/images/ui_img_frame_1_png.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/images/ui_img_shift_light5_png.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/images/ui_img_shift_light_red_png.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/screens/ui_Screen1.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/screens/ui_Screen2.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/ui.c", "/home/bren/arduino/K3_Waveshare7_DashV2/K3_Waveshare7_Dash/main/ui/ui_helpers.c" ],
             "include_dirs": [ "ui", "." ]
         },
         "mbedtls": {

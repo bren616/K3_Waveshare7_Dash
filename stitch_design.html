@@ -1,0 +1,297 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
+<title>Performance Race Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class", 
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#faf837", 
+                        "background-light": "#f8f8f5", 
+                        "background-dark": "#23230f"
+                    }, 
+                    fontFamily: {
+                        display: "Space Grotesk"
+                    }, 
+                    borderRadius: {
+                        DEFAULT: "0.25rem", 
+                        lg: "0.5rem", 
+                        xl: "0.75rem", 
+                        full: "9999px"
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #000;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+        }
+        #dashboard-container {
+            width: 1024px;
+            height: 600px;
+            flex-shrink: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        @media (max-width: 1024px) {
+            #dashboard-container {
+                transform: scale(calc(100vw / 1024));
+            }
+        }
+    </style>
+<script src="chrome-extension://amcccnldajjnngnaoinemnaloklogjak/assets/main-world.ts-B0-0X4eu.js" type="module"></script></head>
+<body class="bg-black text-white font-display selection:bg-primary selection:text-black" data-demoway-document-id="rza98blpdzo9zj6v0alw1acw">
+<div class="relative flex flex-col p-4 gap-4 box-border" id="dashboard-container">
+<!-- RPM & Predictive Header Section - Increased Height -->
+<div class="flex gap-4 w-full h-[120px] shrink-0 z-10">
+<!-- RPM Bar -->
+<div class="flex flex-col w-1/2">
+<div class="flex justify-between px-1 mb-1 text-[11px] font-bold text-zinc-500 tracking-wider">
+<span class="" style="">0</span><span class="" style="">1</span><span class="" style="">2</span><span class="" style="">3</span><span class="" style="">4</span><span class="" style="">5</span>
+<span class="" style="">6</span><span class="" style="">7</span><span class="" style="">8</span><span class="" style="">9</span><span class="" style="">10</span><span class="" style="">11</span>
+<span class="" style="">12</span><span class="" style="">13</span><span class="text-primary" style="">14</span>
+</div>
+<div class="relative h-12 w-full bg-zinc-900 rounded-md border border-zinc-800 overflow-hidden">
+<div class="h-full bg-gradient-to-r from-green-600 via-primary to-red-600 shadow-[0_0_30px_rgba(250,248,55,0.4)] transition-all duration-75 ease-out" style="width: 78%;"></div>
+<div class="absolute inset-0 flex justify-between px-[2px]">
+<div class="w-px h-full bg-black/40"></div><div class="w-px h-full bg-black/40"></div>
+<div class="w-px h-full bg-black/40"></div><div class="w-px h-full bg-black/40"></div>
+<div class="w-px h-full bg-black/40"></div><div class="w-px h-full bg-black/40"></div>
+<div class="w-px h-full bg-black/40"></div><div class="w-px h-full bg-black/40"></div>
+<div class="w-px h-full bg-black/40"></div><div class="w-px h-full bg-black/40"></div>
+<div class="w-px h-full bg-black/40"></div><div class="w-px h-full bg-black/40"></div>
+<div class="w-px h-full bg-black/40"></div><div class="w-px h-full bg-black/40"></div>
+</div>
+<div class="absolute top-0 right-[15%] h-full w-[3px] bg-red-500/90 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
+</div>
+<div class="flex justify-between items-center mt-2 px-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-zinc-500 text-sm" style="">speed</span>
+<span class="text-zinc-400 text-[11px] font-bold tracking-[0.2em]" style="">RPM x1000</span>
+</div>
+<div class="text-primary font-bold text-2xl leading-none tabular-nums" style="">10,950</div>
+</div>
+</div>
+<!-- Predictive Lap Section -->
+<div class="flex flex-col w-1/2">
+<div class="flex justify-between px-1 mb-1 text-[11px] font-bold text-zinc-500 tracking-widest">
+<span class="" style="">DELTA</span>
+<span class="" style="">0.00</span>
+<span class="" style="">PACE</span>
+</div>
+<div class="relative h-12 w-full bg-zinc-900 rounded-md border border-zinc-800 overflow-hidden flex items-center">
+<!-- Predictive "Needle" Bar UI -->
+<div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-zinc-700 z-10"></div>
+<div class="h-full bg-green-500/30 border-r-2 border-green-500 transition-all duration-150" style="width: 42%; margin-left: 8%;"></div>
+</div>
+<div class="flex justify-between items-center mt-2 px-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-green-500 text-sm" style="">trending_down</span>
+<span class="text-zinc-400 text-[11px] font-bold tracking-[0.2em]" style="">PREDICTIVE</span>
+</div>
+<div class="text-green-500 font-bold text-2xl leading-none tabular-nums" style="">-0.45</div>
+</div>
+</div>
+</div>
+<!-- Main Dashboard Body -->
+<div class="flex-1 grid grid-cols-12 gap-4 min-h-0">
+<!-- Left Gauges -->
+<div class="col-span-3 flex flex-col justify-between gap-3 h-full">
+<div class="flex-1 bg-zinc-900/50 border border-zinc-800 p-3 rounded-lg flex flex-col justify-center shadow-lg">
+<div class="flex items-center justify-between mb-1">
+<span class="text-zinc-500 text-xs font-bold tracking-widest" style="">OIL P</span>
+<span class="material-symbols-outlined text-zinc-600 text-sm" style="">water_drop</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-white text-4xl font-bold tabular-nums" style="">85</span>
+<span class="text-zinc-500 text-xs font-medium" style="">PSI</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full mt-auto">
+<div class="h-full bg-green-500 rounded-full" style="width: 65%"></div>
+</div>
+</div>
+<div class="flex-1 bg-zinc-900/50 border border-zinc-800 p-3 rounded-lg flex flex-col justify-center shadow-lg">
+<div class="flex items-center justify-between mb-1">
+<span class="text-zinc-500 text-xs font-bold tracking-widest" style="">OIL T</span>
+<span class="material-symbols-outlined text-zinc-600 text-sm" style="">thermostat</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-primary text-4xl font-bold tabular-nums" style="">105</span>
+<span class="text-zinc-500 text-xs font-medium" style="">°C</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full mt-auto">
+<div class="h-full bg-primary rounded-full" style="width: 75%"></div>
+</div>
+</div>
+<div class="flex-1 bg-zinc-900/50 border border-zinc-800 p-3 rounded-lg flex flex-col justify-center shadow-lg">
+<div class="flex items-center justify-between mb-1">
+<span class="text-zinc-500 text-xs font-bold tracking-widest" style="">Water</span>
+<span class="material-symbols-outlined text-zinc-600 text-sm" style="">waves</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-white text-4xl font-bold tabular-nums" style="">90</span>
+<span class="text-zinc-500 text-xs font-medium" style="">°C</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full mt-auto">
+<div class="h-full bg-green-500 rounded-full" style="width: 82%"></div>
+</div>
+</div>
+</div>
+<!-- Central Gear Display -->
+<div class="col-span-6 flex flex-col items-center justify-center relative border-x border-zinc-900/50">
+<div class="absolute inset-0 bg-gradient-to-b from-zinc-900/0 via-zinc-900/10 to-zinc-900/0 rounded-3xl -z-10"></div>
+<h1 class="text-[340px] leading-[0.7] font-bold text-primary drop-shadow-[0_0_35px_rgba(250,248,55,0.25)] tabular-nums scale-y-110 mt-[-20px]" style="">6</h1>
+<div class="bg-primary text-black text-lg font-bold px-6 py-1 rounded mt-8 uppercase tracking-[0.2em]" style="">Gear</div>
+</div>
+<!-- Right Timing Section -->
+<div class="col-span-3 flex flex-col justify-between gap-3 h-full">
+<div class="flex-[2] bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg flex flex-col justify-center gap-1 shadow-lg">
+<div class="flex items-center justify-between">
+<span class="text-zinc-500 text-xs font-bold tracking-widest" style="">LAP TIME</span>
+<span class="material-symbols-outlined text-zinc-600 text-sm" style="">timer</span>
+</div>
+<div class="flex items-baseline mt-2">
+<span class="text-white text-5xl font-bold tracking-tight tabular-nums" style="">1:34.20</span>
+</div>
+</div>
+<div class="flex-[2] bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg flex flex-col justify-center gap-1 shadow-lg relative overflow-hidden">
+<div class="absolute right-0 top-0 bottom-0 w-2 bg-green-500"></div>
+<div class="flex items-center justify-between">
+<span class="text-zinc-500 text-xs font-bold tracking-widest" style="">DELTA</span>
+<span class="material-symbols-outlined text-green-500 text-sm" style="">arrow_downward</span>
+</div>
+<div class="flex items-baseline mt-2">
+<span class="text-green-500 text-5xl font-bold tracking-tight tabular-nums" style="">-0.45</span>
+</div>
+</div>
+<div class="flex-1 bg-zinc-900/20 border border-zinc-800/50 p-3 rounded-lg flex flex-col justify-center gap-1">
+<div class="flex items-center justify-between">
+<span class="text-zinc-600 text-xs font-bold tracking-widest" style="">BEST LAP</span>
+</div>
+<div class="flex items-baseline">
+<span class="text-zinc-400 text-2xl font-medium tracking-tight tabular-nums" style="">1:33.80</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Tire Section -->
+<div class="grid grid-cols-4 gap-4 w-full shrink-0 h-[110px]">
+<!-- FL -->
+<div class="bg-zinc-900 border-l-4 border-primary border-y border-r border-zinc-800 rounded p-3 flex flex-col justify-between relative group">
+<span class="absolute top-2 right-2 text-zinc-700 text-xs font-bold" style="">FL</span>
+<div class="flex flex-col gap-3 w-full mt-1 pr-6">
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline justify-between w-full">
+<span class="text-white text-2xl font-bold tabular-nums" style="">42</span>
+<span class="text-zinc-500 text-xs" style="">°C</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-blue-500 to-green-500" style="width: 84%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline justify-between w-full">
+<span class="text-primary text-2xl font-bold tabular-nums" style="">26</span>
+<span class="text-zinc-500 text-xs" style="">PSI</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 86%"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-zinc-800 absolute bottom-2 right-2 text-3xl opacity-50" style="">tire_repair</span>
+</div>
+<!-- RL -->
+<div class="bg-zinc-900 border-l-4 border-red-500 border-y border-r border-zinc-800 rounded p-3 flex flex-col justify-between relative group">
+<span class="absolute top-2 right-2 text-zinc-700 text-xs font-bold" style="">RL</span>
+<div class="flex flex-col gap-3 w-full mt-1 pr-6">
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline justify-between w-full">
+<span class="text-red-500 text-2xl font-bold tabular-nums" style="">46</span>
+<span class="text-zinc-500 text-xs" style="">°C</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-green-500 to-red-500" style="width: 92%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline justify-between w-full">
+<span class="text-primary text-2xl font-bold tabular-nums" style="">26</span>
+<span class="text-zinc-500 text-xs" style="">PSI</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 86%"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-zinc-800 absolute bottom-2 right-2 text-3xl opacity-50" style="">tire_repair</span>
+</div>
+<!-- FR -->
+<div class="bg-zinc-900 border-r-4 border-primary border-y border-l border-zinc-800 rounded p-3 flex flex-col justify-between items-end relative group text-right">
+<span class="absolute top-2 left-2 text-zinc-700 text-xs font-bold" style="">FR</span>
+<div class="flex flex-col gap-3 w-full items-end mt-1 pl-6">
+<div class="flex flex-col gap-1 w-full items-end">
+<div class="flex items-baseline justify-between w-full flex-row-reverse">
+<span class="text-white text-2xl font-bold tabular-nums" style="">41</span>
+<span class="text-zinc-500 text-xs" style="">°C</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden rotate-180">
+<div class="h-full bg-gradient-to-r from-blue-500 to-green-500" style="width: 82%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1 w-full items-end">
+<div class="flex items-baseline justify-between w-full flex-row-reverse">
+<span class="text-primary text-2xl font-bold tabular-nums" style="">25</span>
+<span class="text-zinc-500 text-xs" style="">PSI</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden rotate-180">
+<div class="h-full bg-primary" style="width: 83%"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-zinc-800 absolute bottom-2 left-2 text-3xl -scale-x-100 opacity-50" style="">tire_repair</span>
+</div>
+<!-- RR -->
+<div class="bg-zinc-900 border-r-4 border-primary border-y border-l border-zinc-800 rounded p-3 flex flex-col justify-between items-end relative group text-right">
+<span class="absolute top-2 left-2 text-zinc-700 text-xs font-bold" style="">RR</span>
+<div class="flex flex-col gap-3 w-full items-end mt-1 pl-6">
+<div class="flex flex-col gap-1 w-full items-end">
+<div class="flex items-baseline justify-between w-full flex-row-reverse">
+<span class="text-white text-2xl font-bold tabular-nums" style="">43</span>
+<span class="text-zinc-500 text-xs" style="">°C</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden rotate-180">
+<div class="h-full bg-gradient-to-r from-blue-500 to-green-500" style="width: 86%"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1 w-full items-end">
+<div class="flex items-baseline justify-between w-full flex-row-reverse">
+<span class="text-primary text-2xl font-bold tabular-nums" style="">26</span>
+<span class="text-zinc-500 text-xs" style="">PSI</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden rotate-180">
+<div class="h-full bg-primary" style="width: 86%"></div>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-zinc-800 absolute bottom-2 left-2 text-3xl -scale-x-100 opacity-50" style="">tire_repair</span>
+</div>
+</div>
+</div>
+</body></html>
