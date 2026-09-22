@@ -63,7 +63,9 @@ void ui_Screen1_screen_init(void) {
   lv_obj_set_x(ui_Gearlabel, -22);
   lv_obj_set_y(ui_Gearlabel, 1);
   lv_obj_set_align(ui_Gearlabel, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_Gearlabel, "1");
+  /* Placeholder must NOT be a value the ECU can send, otherwise a label that
+   * is never written is indistinguishable from a live reading. */
+  lv_label_set_text(ui_Gearlabel, "-");
   lv_obj_set_style_text_color(ui_Gearlabel, lv_color_hex(0xFFFFFF),
                               LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_Gearlabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);

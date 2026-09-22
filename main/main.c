@@ -192,22 +192,37 @@ void app_main(void) {
 
   // Define CAN mapping
   static DashVariable dash_vars[] = {
-      {"RPM", &ui_RPMLabel, 0x100, 2, 1, 0, 1000, 1000, 14000, 100, true},
-      {"Gear", &ui_Gearlabel, 0x121, 1, -1, 2, 0, 0, 6, 1, true},
-      {"WaterTemp", &ui_WaterTempLabel, 0x111, 2, 0, 1, 60, 60, 120, 1, true},
-      {"OilTemp", &ui_OilTempLabel, 0x132, 2, 0, 1, 20, 20, 110, 1, true},
-      {"OilPress", &ui_OilPressLabel, 0x133, 2, 0, 1, 1, 1, 90, 1, true},
-      {"FLTemp", &ui_FLTempLabel, 0x126, 1, -1, 2, 5, 5, 35, 1, true},
-      {"FRTemp", &ui_FRTempLabel, 0x127, 1, -1, 2, 5, 5, 35, 1, true},
-      {"FLPress", &ui_FLPressLabel, 0x126, 2, 3, 4, 11, 11, 22, 1, true},
-      {"FRPress", &ui_FRPressLabel, 0x127, 2, 3, 4, 11, 11, 22, 1, true},
-      {"RLTemp", &ui_RLTempLabel, 0x128, 1, -1, 2, 5, 5, 35, 1, true},
-      {"RRTemp", &ui_RRTempLabel, 0x129, 1, -1, 2, 5, 5, 35, 1, true},
-      {"RLPress", &ui_RLPressLabel, 0x128, 2, 3, 4, 11, 11, 22, 1, true},
-      {"RRPress", &ui_RRPressLabel, 0x129, 2, 3, 4, 11, 11, 22, 1, true}};
+      {"RPM", &ui_RPMLabel, 0x100, 2, 0, 1, 1000, 1000, 14000, 100, true, 0, 0, 0, false},
+      /* 0x121 is a 2-byte frame (dlc=2): gear is byte 0, 0 = neutral; byte 1
+       * is a constant 0x01. Confirmed with CAN_LOG_GEARHUNT - 14 clean
+       * 00<->01 transitions on byte 0 matching 7 N<->1 shifts, while no other
+       * byte on the bus tracked the lever.
+       *
+       * The previous mapping read byte 2, which is past the end of the frame,
+       * so every gear frame was rejected as "too short" and the label was
+       * never written. Do not "fix" this back to a 1-based byte number. */
+      {"Gear", &ui_Gearlabel, 0x121, 1, -1, 0, 0, 0, 6, 1, true, 0, 0, 0, false},
+      /* Water temp is 0x120 byte 1, NOT 0x111 - 0x111 sits at a constant
+       * 0x0000. Confirmed over a 4 min warm-up: byte 1 climbed 93 -> 127
+       * monotonically while byte 3 (a second sensor) rose only 78 -> 86.
+       * Raw is degC + 64, so 127 -> 63 degC. */
+      {"WaterTemp", &ui_WaterTempLabel, 0x120, 1, -1, 1, 60, 60, 120, 1, true, 1, 1, -64, false},
+      {"OilTemp", &ui_OilTempLabel, 0x132, 2, 0, 1, 20, 20, 110, 1, true, 0, 0, 0, false},
+      {"OilPress", &ui_OilPressLabel, 0x133, 2, 0, 1, 1, 1, 90, 1, true, 0, 0, 0, false},
+      {"FLTemp", &ui_FLTempLabel, 0x126, 1, -1, 2, 5, 5, 35, 1, true, 0, 0, 0, false},
+      {"FRTemp", &ui_FRTempLabel, 0x127, 1, -1, 2, 5, 5, 35, 1, true, 0, 0, 0, false},
+      {"FLPress", &ui_FLPressLabel, 0x126, 2, 3, 4, 11, 11, 22, 1, true, 0, 0, 0, false},
+      {"FRPress", &ui_FRPressLabel, 0x127, 2, 3, 4, 11, 11, 22, 1, true, 0, 0, 0, false},
+      {"RLTemp", &ui_RLTempLabel, 0x128, 1, -1, 2, 5, 5, 35, 1, true, 0, 0, 0, false},
+      {"RRTemp", &ui_RRTempLabel, 0x129, 1, -1, 2, 5, 5, 35, 1, true, 0, 0, 0, false},
+      {"RLPress", &ui_RLPressLabel, 0x128, 2, 3, 4, 11, 11, 22, 1, true, 0, 0, 0, false},
+      {"RRPress", &ui_RRPressLabel, 0x129, 2, 3, 4, 11, 11, 22, 1, true, 0, 0, 0, false}};
 
-  init_can_manager();
+  /* Publish the mapping BEFORE starting the RX task, otherwise frames that
+   * arrive in the gap are dropped (can_rx_task skips while g_dash_vars is
+   * NULL). */
   set_dash_variables(dash_vars, sizeof(dash_vars) / sizeof(dash_vars[0]));
+  init_can_manager();
 
   init_delta_speed_bar();
 

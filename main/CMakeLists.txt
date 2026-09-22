@@ -15,7 +15,7 @@ target_compile_options(
 )
 
 # Uncomment the next line to enable RPM shift-light test sweep (no CAN needed)
-target_compile_definitions(${COMPONENT_LIB} PRIVATE SHIFT_LIGHT_TEST_MODE)
+#target_compile_definitions(${COMPONENT_LIB} PRIVATE SHIFT_LIGHT_TEST_MODE)
 
 # Uncomment the next line to enable display demo mode (cycles all values)
-target_compile_definitions(${COMPONENT_LIB} PRIVATE DEMO_MODE)
+#target_compile_definitions(${COMPONENT_LIB} PRIVATE DEMO_MODE)

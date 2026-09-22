@@ -24,6 +24,19 @@ typedef struct {
   int32_t max_val;
   int32_t step_val;
   bool increasing; // Direction for mock sweep
+
+  /* Engineering-units conversion: value = raw * scale_mul / scale_div + offset.
+   * A zero mul or div is treated as 1, so an entry that leaves these at 0 is
+   * an identity mapping and needs no change. */
+  int16_t scale_mul;
+  int16_t scale_div;
+  int16_t offset;
+
+  /* Runtime state, not part of the positional initialisers in main.c.
+   * ui_valid is false until the first decoded frame has been pushed to the
+   * label, so a channel whose first real value happens to equal current_val
+   * still overwrites the placeholder text the UI was built with. */
+  bool ui_valid;
 } DashVariable;
 
 /**

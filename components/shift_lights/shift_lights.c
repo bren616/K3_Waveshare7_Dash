@@ -13,11 +13,22 @@ static const char *TAG = "SHIFT_LIGHTS";
 #define SHIFT_LIGHT_GPIO 49
 
 /* RPM thresholds: 9 thresholds map to LEDs 0–8 (left to right).
- * LED 9 only participates in the >13000 RPM flash-all mode. */
+ * LED 9 only participates in the flash-all mode above RPM_FLASH_THRESHOLD.
+ *
+ * Define SHIFT_LIGHT_LOW_RPM_TEST to shift the whole sequence down so the
+ * strip can be exercised on the bench (or at idle) without revving out:
+ * the sweep then runs 3000 → 7000 RPM with the same 500 RPM per LED step.
+ * Production thresholds are 9000 → 13000. */
+#ifdef SHIFT_LIGHT_LOW_RPM_TEST
+#define RPM_THRESHOLD_START 3000
+#define RPM_FLASH_THRESHOLD 7000
+#else
 #define RPM_THRESHOLD_START 9000
+#define RPM_FLASH_THRESHOLD 13000
+#endif
+
 #define RPM_THRESHOLD_STEP 500
 #define RPM_THRESHOLD_COUNT 9
-#define RPM_FLASH_THRESHOLD 13000
 #define FLASH_INTERVAL_MS 500
 
 /* Colours (GRB order not needed — the led_strip API takes R, G, B) */
